@@ -1,0 +1,11 @@
+{
+    "proxy": {
+        "address": "localhost"
+    },
+    "api": {
+        "key": "your_api_key"
+    },
+    "createWallet": {
+        "num": 1
+    }
+}

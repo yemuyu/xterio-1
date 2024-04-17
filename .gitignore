@@ -1,0 +1,4 @@
+*.log
+node_modules/
+data/account.txt
+data/token.txt
