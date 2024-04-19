@@ -2,3 +2,4 @@
 node_modules/
 data/account.txt
 data/token.txt
+config/private_config.json

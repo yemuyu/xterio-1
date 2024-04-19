@@ -3,12 +3,14 @@ import { Buffer } from "buffer";
 const qs = require('qs');
 import { getDeviceId } from './utils';
 import { LogUtil } from './logUtil';
+import { httpUtil } from './httpUtil';
+import axios, { AxiosInstance, AxiosError } from "axios";
 
 
 export class XterApi {
     address: string;
     deviceid: string;
-    proxy: null;
+    axiosInstance: AxiosInstance;
     access_token: null;
     id_token: string;
     refresh_token: null;
@@ -17,7 +19,7 @@ export class XterApi {
     constructor(address:string, id_token:string) {
         this.address = address;
         this.deviceid = getDeviceId();
-        this.proxy = null;
+        this.axiosInstance = httpUtil.getProxy();
         this.access_token = null;
         this.id_token = id_token;
         this.refresh_token = null;
@@ -25,75 +27,138 @@ export class XterApi {
         this.config = null;
     }
 
+    async post(url: string, body: any) {
+        LogUtil.info(`${this.address} POST: ${url} - ${JSON.stringify(body)}`);
+        try {
+            const resp = await this.axiosInstance.post(url, body, {
+                headers: {
+                    "accept": "*/*",
+                    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+                    "authorization": this.id_token,
+                    "content-type": "application/json",
+                    "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\"macOS\"",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-site",
+                    // "sensorsdatajssdkcross": this.getSensorsdata(),
+                    "Referer": "https://xter.io/",
+                    "Referrer-Policy": "strict-origin-when-cross-origin"
+                }
+            });
+            const respData = resp.data;
+            LogUtil.info(`${this.address} POST Return: ${JSON.stringify(respData)}`);
+            if (respData.err_code !== 0) {
+                throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: ${JSON.stringify(respData)}`);
+            }
+            return respData.data;
+        } catch (error) {
+            throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: ${error.message}`);
+        }
+    }
 
-async post(url: string, body: any) {
-    LogUtil.info(`${this.address} POST: ${url} - ${JSON.stringify(body)}`);
-    const resp = await fetch(url, {
-        headers: {
-            "accept": "*/*",
-            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "authorization": this.id_token,
-            "content-type": "application/json",
-            "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"macOS\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            // "sensorsdatajssdkcross": this.getSensorsdata(),
-            "Referer": "https://xter.io/",
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        body: JSON.stringify(body),
-        method: "POST"
-    });
-    const text = await resp.text();
-    LogUtil.info(`${this.address} POST Return: ${text}`);
-    let respData;
-    try {
-        respData = JSON.parse(text);
-    } catch (error) {
-        throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: Invalid JSON response`);
+    async get(url: string, params = {}) {
+        try {
+            const queryParams = new URLSearchParams(params).toString();
+            const fullUrl = queryParams ? `${url}?${queryParams}` : url;
+            LogUtil.info(`${this.address} GET: ${fullUrl} - ${JSON.stringify(params)}`);
+            const resp = await this.axiosInstance.get(fullUrl, {
+                headers: {
+                    "accept": "*/*",
+                    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+                    "authorization": this.id_token,
+                    "content-type": "application/json",
+                    "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\"macOS\"",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-site",
+                    // "sensorsdatajssdkcross": this.getSensorsdata(),
+                    "Referer": "https://xter.io/",
+                    "Referrer-Policy": "strict-origin-when-cross-origin"
+                }
+            });
+            const respData = resp.data;
+            LogUtil.info(`${this.address} GET Return: ${JSON.stringify(respData)}`);
+            if (respData.err_code !== 0) {
+                throw new Error(`${this.address} Request:GET ${fullUrl} Error: ${JSON.stringify(respData)}`);
+            }
+            return respData.data;
+        } catch (error) {
+            throw new Error(`${this.address} Request:GET ${url}-${JSON.stringify(params)} Error: ${error.message}`);
+        }
     }
-    if (respData.err_code !== 0) {
-        throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: ${text}`);
-    }
-    return respData.data;
-}
+
+// async post(url: string, body: any) {
+//     LogUtil.info(`${this.address} POST: ${url} - ${JSON.stringify(body)}`);
+//     const resp = await fetch(url, {
+//         headers: {
+//             "accept": "*/*",
+//             "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+//             "authorization": this.id_token,
+//             "content-type": "application/json",
+//             "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+//             "sec-ch-ua-mobile": "?0",
+//             "sec-ch-ua-platform": "\"macOS\"",
+//             "sec-fetch-dest": "empty",
+//             "sec-fetch-mode": "cors",
+//             "sec-fetch-site": "same-site",
+//             // "sensorsdatajssdkcross": this.getSensorsdata(),
+//             "Referer": "https://xter.io/",
+//             "Referrer-Policy": "strict-origin-when-cross-origin"
+//         },
+//         body: JSON.stringify(body),
+//         method: "POST"
+//     });
+//     const text = await resp.text();
+//     LogUtil.info(`${this.address} POST Return: ${text}`);
+//     let respData;
+//     try {
+//         respData = JSON.parse(text);
+//     } catch (error) {
+//         throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: Invalid JSON response`);
+//     }
+//     if (respData.err_code !== 0) {
+//         throw new Error(`${this.address} Request:POST ${url}-${JSON.stringify(body)} Error: ${text}`);
+//     }
+//     return respData.data;
+// }
 
 
-async get(url:string, params={}) {
-    if (params) {
-        url = `${url}?${qs.stringify(params)}`;
-    }
-    LogUtil.info(`${this.address} GET: ${url} - ${JSON.stringify(params)}`);
-    const resp = await fetch(url, {
-        "headers": {
-            "accept": "*/*",
-            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "authorization": this.id_token,
-            "content-type": "application/json",
-            "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"macOS\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            // "sensorsdatajssdkcross": this.getSensorsdata(),
-            "Referer": "https://xter.io/",
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        "body": null,
-        "method": "GET"
-    });
-    const text = await resp.text();
-    LogUtil.info(`${this.address} GET Return: ${text}`);
-    const respData = JSON.parse(text);
-    if (respData.err_code !== 0) {
-        throw new Error(`${this.address} Request:GET ${url} Error: ${text}`);
-    }
-    return respData.data;
-}
+// async get(url:string, params={}) {
+//     if (params) {
+//         url = `${url}?${qs.stringify(params)}`;
+//     }
+//     LogUtil.info(`${this.address} GET: ${url} - ${JSON.stringify(params)}`);
+//     const resp = await fetch(url, {
+//         "headers": {
+//             "accept": "*/*",
+//             "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+//             "authorization": this.id_token,
+//             "content-type": "application/json",
+//             "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+//             "sec-ch-ua-mobile": "?0",
+//             "sec-ch-ua-platform": "\"macOS\"",
+//             "sec-fetch-dest": "empty",
+//             "sec-fetch-mode": "cors",
+//             "sec-fetch-site": "same-site",
+//             // "sensorsdatajssdkcross": this.getSensorsdata(),
+//             "Referer": "https://xter.io/",
+//             "Referrer-Policy": "strict-origin-when-cross-origin"
+//         },
+//         "body": null,
+//         "method": "GET"
+//     });
+//     const text = await resp.text();
+//     LogUtil.info(`${this.address} GET Return: ${text}`);
+//     const respData = JSON.parse(text);
+//     if (respData.err_code !== 0) {
+//         throw new Error(`${this.address} Request:GET ${url} Error: ${text}`);
+//     }
+//     return respData.data;
+// }
 
     getSensorsdata() {
         let identitiesStr = {"$identity_cookie_id":this.deviceid};

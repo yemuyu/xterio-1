@@ -19,11 +19,13 @@ class task {
     //构造函数 创建对象初始化对象属性
     constructor(address: string,privateKey: string,proxy: string) {
         // 固定参数
-        this.proxyAgent = new HttpsProxyAgent(proxy);
+        this.proxyAgent = new HttpsProxyAgent({
+            host: '193.58.145.42',
+            port: 12323,
+            auth: '14af35596daca:a08c62e99e'
+        });
         this.axios = Axios.create({
-            proxy: false
-            // ,
-            // httpsAgent: this.proxyAgent,
+            httpsAgent: this.proxyAgent
         });
         this.address = address;
         this.privateKey = privateKey;

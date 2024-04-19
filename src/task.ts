@@ -14,22 +14,13 @@ import {LogUtil} from './libs/logUtil'
 let keyPairs: string | any[];
 
 class task {
-  
-    axios: any;
     address: string;
     privateKey: string;
     id_token: string;
-    proxyAgent: any;
     api: XterApi;
     chainAbi: ChainAbi;
     //构造函数 创建对象初始化对象属性
     constructor(address:string, privateKey:string, id_token:string, proxy:string) {
-        // 代理没用上，应该放到XterApi中，发送api请求时使用axios
-        this.proxyAgent = new HttpsProxyAgent(proxy);
-        this.axios = Axios.create({
-            proxy: false,
-            httpsAgent: this.proxyAgent,
-        });
         this.address = address;
         this.privateKey = privateKey;
         this.api = new XterApi(this.address, id_token);
@@ -74,11 +65,14 @@ class task {
         const inviteCode = await this.api.inviteCode();
         //code：自己的邀请码，activate_code：填入的别人邀请码
         const {activate_code, code} = inviteCode;
-        if (activate_code === '' && !inviteCode.eq(activate_code)) {
-            // 填入别人的邀请码
+        if (activate_code === '') {
             const activateCode = getInviteCode();
-            LogUtil.info(`${this.address} 没有设置邀请码, 设置邀请码: ${activateCode}`)
-            await this.api.apply(activateCode);
+            if(activateCode != activate_code) {
+                // 填入别人的邀请码
+                LogUtil.info(`${this.address} 没有设置邀请码, 设置邀请码: ${activateCode}`)
+                await this.api.apply(activateCode);
+            }
+            
         } else {
             LogUtil.info(`已经设置过邀请码了: ${activate_code}`);
         }
@@ -145,18 +139,19 @@ class task {
 
 
     async Run() {
+        LogUtil.info('填邀请码任务开始...')
+        await this.setInviteCode();
         // LogUtil.info('领取道具任务开始...')
         // await this.claimUtility();
         // LogUtil.info('投喂道具任务开始...')
         // await this.feedUtility();
-        // LogUtil.info('填邀请码任务开始...')
-        // await this.setInviteCode();
+
         // LogUtil.info("chat NFT任务开始")
         // await this.mintChatNft();
         // this.summary();
-        LogUtil.info("投票任务开始")
-        await this.vote();
-        LogUtil.info("投票任务结束")
+        // LogUtil.info("投票任务开始")
+        // await this.vote();
+        // LogUtil.info("投票任务结束")
     }
   
 }
