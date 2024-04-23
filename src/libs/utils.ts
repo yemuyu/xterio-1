@@ -71,7 +71,7 @@ export function readFile(relativeFilePath:string) {
 
     try {
         data = fs.readFileSync(absoluteFilePath, 'utf8');
-        console.log('文件内容:', data);
+        // console.log('文件内容:', data);
     } catch (err) {
         console.error('无法读取文件:', err);
     }
@@ -117,9 +117,7 @@ export function getInviteCode() {
 }
 
 export function getHttpProxy() {
-    const relativeFilePath = 'config/private_config.json';
-    const data = readFile(relativeFilePath);
-    const jsonData = JSON.parse(data);
+    const jsonData = getConfigJson();
     //读取json中的字段并解析,proxy_http是数组，格式为: name:pass:ip:port
      // 获取 proxy_http 字段的值
      const proxyHttpArray: string[] = jsonData.proxy_http;
@@ -134,17 +132,33 @@ export function getHttpProxy() {
       return proxies;
 }
 
-function Run() {
-    const proxies:ProxyInfo[]  = getHttpProxy();
-    proxies.forEach((proxy, index) => {
-        console.log(`Proxy ${index + 1}:`);
-        console.log(`Name: ${proxy.name}`);
-        console.log(`Pass: ${proxy.pass}`);
-        console.log(`IP: ${proxy.ip}`);
-        console.log(`Port: ${proxy.port}`);
-        console.log('-------------------------');
-      });
+export function getSecretKey() {
+    const jsonData = getConfigJson();
+    return jsonData.secretKey;
 }
 
+export function getDbConfig() {
+    const jsonData = getConfigJson();
+    return jsonData.db;
+}
 
-Run();
+function getConfigJson() {
+    const relativeFilePath = 'config/private_config.json';
+    const data = readFile(relativeFilePath);
+    return JSON.parse(data);
+}
+
+// function Run() {
+//     const proxies:ProxyInfo[]  = getHttpProxy();
+//     proxies.forEach((proxy, index) => {
+//         console.log(`Proxy ${index + 1}:`);
+//         console.log(`Name: ${proxy.name}`);
+//         console.log(`Pass: ${proxy.pass}`);
+//         console.log(`IP: ${proxy.ip}`);
+//         console.log(`Port: ${proxy.port}`);
+//         console.log('-------------------------');
+//       });
+// }
+
+
+// Run();

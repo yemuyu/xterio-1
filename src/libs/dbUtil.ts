@@ -1,24 +1,40 @@
 import mysql, { Connection } from 'mysql';
+import {DbConfig} from './type';
+import {getDbConfig} from './utils'
 
-// 创建MySQL连接配置
-const connectionConfig: mysql.ConnectionConfig = {
-  host: 'localhost', // 数据库主机名
-  user: 'username', // 数据库用户名
-  password: 'password', // 数据库密码
-  database: 'database_name' // 数据库名称
-};
+class DbUtil {
+    dbConfig:DbConfig;
+    connectionConfig: mysql.ConnectionConfig;
+    constructor() {
+      this.dbConfig = getDbConfig();
+      // 创建MySQL连接配置
+       this.connectionConfig = {
+        host: this.dbConfig.host,
+        user: this.dbConfig.user,
+        password: this.dbConfig.password,
+        database: 'account' // 数据库名称
+      };
+    }
 
-// 创建MySQL连接
-const connection: Connection = mysql.createConnection(connectionConfig);
+    getConnection(): Connection {
+      // 创建MySQL连接
+      const connection: Connection = mysql.createConnection(this.connectionConfig);
+      return connection;
+    }
 
-// 连接到MySQL数据库
-connection.connect((err: mysql.MysqlError | null) => {
-  if (err) {
-    console.error('Error connecting to MySQL database: ' + err.stack);
-    return;
-  }
-  console.log('Connected to MySQL database as id ' + connection.threadId);
-});
+    connect() {
+      const connection: Connection = this.getConnection();
+      // 连接到MySQL数据库
+      connection.connect((err: mysql.MysqlError | null) => {
+        if (err) {
+          console.error('Error connecting to MySQL database: ' + err.stack);
+          return;
+        }
+        console.log('Connected to MySQL database as id ' + connection.threadId);
+      });
+    }
+}
+
 
 // // 执行一条SQL查询
 // connection.query('SELECT * FROM table_name', (error: QueryError | null, results?: any[], fields?: FieldPacket[]) => {
@@ -65,3 +81,13 @@ connection.connect((err: mysql.MysqlError | null) => {
 //   }
 //   console.log('Disconnected from MySQL database');
 // });
+
+
+function test() {
+  console.log("test")
+  const dbUtil:DbUtil = new DbUtil();
+  dbUtil.getConnection();
+  dbUtil.connect();
+}
+
+test();
