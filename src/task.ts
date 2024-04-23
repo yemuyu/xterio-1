@@ -4,7 +4,7 @@ import  { HttpsProxyAgent }  from "https-proxy-agent/dist";
 import { Buffer } from "buffer";
 import { ethers } from "ethers";
 import config from '../config/config.json';
-import {getInviteCode, getToken } from './libs/utils';
+import {getInviteCode, getPrivateKeys, getToken, saveToken } from './libs/utils';
 import { getDeviceId, getChatAnswer } from './libs/utils';
 import {XterApi} from './libs/api'
 import { ChainAbi } from './libs/chainAbi';
@@ -20,7 +20,7 @@ class task {
     api: XterApi;
     chainAbi: ChainAbi;
     //构造函数 创建对象初始化对象属性
-    constructor(address:string, privateKey:string, id_token:string, proxy:string) {
+    constructor(address:string, privateKey:string, id_token:string) {
         this.address = address;
         this.privateKey = privateKey;
         this.api = new XterApi(this.address, id_token);
@@ -137,35 +137,84 @@ class task {
         LogUtil.info(`boost=${boost.map(p=>p.value+'').join('+')}, point=${point.map(p=>p.value+'').join(' + ')}, rank=${rank}, invitedNum=${invited_num}, ticket=${total_ticket}`);
     }
 
+    // 签名信息
+    async signMessage(message: string) {
+        const wallet = new ethers.Wallet(this.privateKey);
+        let signature = await wallet.signMessage(message);
+        return signature;
+    }
+
+    async login(){
+        console.log(`${this.address}，获得登录签名`)
+        let wallet_message = await this.api.getSignMessage()
+        if (wallet_message != undefined) {
+            console.log("钱包签名")
+            let signMessage = await this.signMessage(wallet_message);
+            console.log(`签名信息:${signMessage}`)
+            console.log('登录')
+            let wallet_login = await this.api.wallet_login(signMessage)
+            if (wallet_login?.err_code === 0) {
+                console.log(`登录成功:${this.address}`)
+                saveToken(`${this.address}----${this.privateKey}----${wallet_login?.data?.id_token}\n`)
+            }else{
+                console.log(`登录失败，${this.address}:${wallet_login}`)
+            }
+        }else{
+            console.log(`${this.address}:${wallet_message}`)
+            
+        }  
+    }
+
+
+
 
     async Run() {
         LogUtil.info('填邀请码任务开始...')
         await this.setInviteCode();
-        // LogUtil.info('领取道具任务开始...')
-        // await this.claimUtility();
-        // LogUtil.info('投喂道具任务开始...')
-        // await this.feedUtility();
+        LogUtil.info('领取道具任务开始...')
+        await this.claimUtility();
+        LogUtil.info('领取道具任务完成...')
+        LogUtil.info('投喂道具任务开始...')
+        await this.feedUtility();
+        LogUtil.info('投喂道具任务完成...')
 
-        // LogUtil.info("chat NFT任务开始")
-        // await this.mintChatNft();
+        LogUtil.info("chat NFT任务开始")
+        await this.mintChatNft();
+        LogUtil.info("chat NFT任务完成")
         // this.summary();
         // LogUtil.info("投票任务开始")
         // await this.vote();
         // LogUtil.info("投票任务结束")
     }
+
+    async RunOnce() {
+        LogUtil.info('登录任务开始...')
+        await this.login();
+    }
   
 }
 
+function RunOnce() {
+    console.log('执行一次任务...');
+    keyPairs = getPrivateKeys();
+    for (let i = 0; i < keyPairs.length; i++) {
+        const address = keyPairs[i].address;
+        const privateKey = keyPairs[i].privateKey;
+        console.log(`第${i}个，地址：${address}:Run...`);
+        const myTask = new task(address, privateKey, '');
+         myTask.RunOnce();
+    }
+}
+
 function Run() {
-    console.log('执行任务...');
+    console.log('执行每日任务...');
     keyPairs = getToken();
-    const proxy = config.proxy.address;
     for (let i = 0; i < keyPairs.length; i++) {
         const address = keyPairs[i].address;
         const privateKey = keyPairs[i].privateKey;
         const id_token = keyPairs[i].token;
         console.log(`第${i}个，地址：${address}:Run...`);
-        const myTask = new task(address, privateKey, id_token, proxy);
+        const myTask = new task(address, privateKey, id_token);
          myTask.Run();
     }
 }

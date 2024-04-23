@@ -11,8 +11,6 @@ import { getDeviceId } from './libs/utils';
 let keyPairs: string | any[];
 
 class task {
-  
-    axios: any;
     address: string;
     privateKey: string;
     id_token: string;
@@ -22,13 +20,7 @@ class task {
     provider: ethers.providers.JsonRpcProvider;
     wallet: ethers.Wallet;
     //构造函数 创建对象初始化对象属性
-    constructor(address:string, privateKey:string, id_token:string, proxy:string) {
-        // 固定参数
-        this.proxyAgent = new HttpsProxyAgent(proxy);
-        this.axios = Axios.create({
-            proxy: false,
-            httpsAgent: this.proxyAgent,
-        });
+    constructor(address:string, privateKey:string, id_token:string) {
         this.address = address;
         this.privateKey = privateKey;
         this.id_token = id_token;
@@ -58,6 +50,7 @@ class task {
             // 等待交易被挖掘
             await tx.wait();
             console.log("Transaction confirmed.");
+            console.log("完成开蛋");
         } catch (error) {
             console.error("Error:", error);
         }
@@ -73,13 +66,12 @@ class task {
 function Run() {
     console.log('执行claimEgg任务...');
     keyPairs = getToken();
-    const proxy = config.proxy.address;
     for (let i = 0; i < keyPairs.length; i++) {
         const address = keyPairs[i].address;
         const privateKey = keyPairs[i].privateKey;
         const id_token = keyPairs[i].token;
         console.log(`第${i}个，地址：${address}:Run...`);
-        const myTask = new task(address, privateKey, id_token, proxy);
+        const myTask = new task(address, privateKey, id_token);
          myTask.Run();
     }
 }

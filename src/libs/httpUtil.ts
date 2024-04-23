@@ -35,7 +35,8 @@ export class httpUtil {
         if (proxies.length === 0) {
         return undefined; // 如果数组为空，则返回 undefined
         }
-        const randomIndex = Math.floor(Math.random() * proxies.length); // 生成随机索引
+        // const randomIndex = Math.floor(Math.random() * proxies.length); // 生成随机索引
+        const randomIndex = 0;
         return proxies[randomIndex]; // 返回随机选择的元素
     }
 
