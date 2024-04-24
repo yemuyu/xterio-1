@@ -33,6 +33,19 @@ class DbUtil {
         console.log('Connected to MySQL database as id ' + connection.threadId);
       });
     }
+
+    closeConnection(connection: Connection) {
+      // 断开与MySQL数据库的连接
+      connection.end((err: mysql.MysqlError | null) => {
+        if (err) {
+          console.error('Error disconnecting from MySQL database: ' + err.stack);
+          return;
+        }
+        console.log('Disconnected from MySQL database');
+      });
+    }
+
+   
 }
 
 
