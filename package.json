@@ -10,6 +10,7 @@
     "login": "ts-node src/login.ts"
   },
   "dependencies": {
+    "@planetscale/database": "^1.16.0",
     "@sentry/node": "^7.51.0",
     "@types/axios": "^0.14.0",
     "@types/mysql": "^2.15.26",
@@ -17,13 +18,16 @@
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
+    "drizzle-orm": "^0.30.9",
     "ethers": "^5.7.2",
     "https-proxy-agent": "^5.0.1",
     "mysql": "^2.18.1",
+    "mysql2": "^3.9.7",
     "web3": "^1.9.0",
     "web3-utils": "^1.9.0"
   },
   "devDependencies": {
-    "@types/node": "^20.12.7"
+    "@types/node": "^20.12.7",
+    "drizzle-kit": "^0.20.17"
   }
 }
